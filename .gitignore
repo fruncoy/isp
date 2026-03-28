@@ -1,0 +1,15 @@
+# Dependencies - these are huge and can be reinstalled with npm install
+node_modules/
+*/node_modules/
+
+# Build output (optional - remove these lines if you want to include dist)
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
