@@ -15,6 +15,9 @@ import Customers from './pages/admin/Customers';
 import Sales from './pages/admin/Sales';
 import Payments from './pages/admin/Payments';
 import Reports from './pages/admin/Reports';
+import ServicesCatalogue from './pages/admin/ServicesCatalogue';
+import Analytics from './pages/admin/Analytics';
+import ActivityLogs from './pages/admin/ActivityLogs';
 
 // Sales Rep Pages
 import SalesDashboard from './pages/sales/Dashboard';
@@ -22,6 +25,8 @@ import RegisterCustomer from './pages/sales/RegisterCustomer';
 import RecordSale from './pages/sales/RecordSale';
 import RecordPayment from './pages/sales/RecordPayment';
 import MyCustomers from './pages/sales/MyCustomers';
+import SalesReports from './pages/sales/Reports';
+import ManageCustomer from './pages/sales/ManageCustomer';
 
 // Protected Route wrapper
 function ProtectedRoute({ children, allowedRole }) {
@@ -83,10 +88,13 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<ManageUsers />} />
+        <Route path="services" element={<ServicesCatalogue />} />
         <Route path="customers" element={<Customers />} />
         <Route path="sales" element={<Sales />} />
         <Route path="payments" element={<Payments />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="logs" element={<ActivityLogs />} />
       </Route>
 
       {/* Sales Rep Routes */}
@@ -101,6 +109,8 @@ export default function App() {
         <Route path="record-sale" element={<RecordSale />} />
         <Route path="record-payment" element={<RecordPayment />} />
         <Route path="my-customers" element={<MyCustomers />} />
+        <Route path="manage-customer/:id" element={<ManageCustomer />} />
+        <Route path="reports" element={<SalesReports />} />
       </Route>
 
       {/* Fallback */}

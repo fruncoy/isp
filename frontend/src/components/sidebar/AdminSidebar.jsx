@@ -8,6 +8,9 @@ import {
   Banknote, 
   CreditCard,
   PieChart,
+  Settings,
+  History,
+  BarChart3,
   LogOut
 } from 'lucide-react';
 
@@ -29,13 +32,19 @@ export default function AdminSidebar() {
         <NavLink to="/admin/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={18} /> Dashboard
         </NavLink>
+        <NavLink to="/admin/analytics" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <BarChart3 size={18} /> Analytics
+        </NavLink>
 
         <div className="nav-section-label">Management</div>
         <NavLink to="/admin/users" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Users size={18} /> Manage Team
+          <Users size={18} /> Sales Rep Mgt
         </NavLink>
         <NavLink to="/admin/customers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UserSquare2 size={18} /> Customers
+          <UserSquare2 size={18} /> Customer Mgt
+        </NavLink>
+        <NavLink to="/admin/services" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Settings size={18} /> Services Catalogue
         </NavLink>
 
         <div className="nav-section-label">Finance</div>
@@ -46,9 +55,12 @@ export default function AdminSidebar() {
           <CreditCard size={18} /> Payments
         </NavLink>
 
-        <div className="nav-section-label">Analytics</div>
+        <div className="nav-section-label">System</div>
         <NavLink to="/admin/reports" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <PieChart size={18} /> Reports
+        </NavLink>
+        <NavLink to="/admin/logs" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <History size={18} /> Activity Logs
         </NavLink>
       </nav>
 
@@ -64,3 +76,4 @@ export default function AdminSidebar() {
     </aside>
   );
 }
+

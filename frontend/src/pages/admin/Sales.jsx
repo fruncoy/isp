@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Search, MapPin, Building2, Banknote } from 'lucide-react';
+import { Search, MapPin, Building2 } from 'lucide-react';
 
 export default function Sales() {
   const [sales, setSales] = useState([]);
@@ -9,22 +9,19 @@ export default function Sales() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetchSales();
-  }, []);
-
-  const fetchSales = async () => {
-    try {
-      const q = query(collection(db, 'sales'), orderBy('date', 'desc'));
-      const snap = await getDocs(q);
+    const q = query(collection(db, 'sales'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSales(data);
-    } catch (err) {
+      setLoading(false);
+    }, (err) => {
       console.error(err);
       setSales([]);
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+
+    return () => unsub();
+  }, []);
 
   const filtered = sales.filter(s => 
     s.customerName?.toLowerCase().includes(search.toLowerCase()) || 
@@ -36,7 +33,7 @@ export default function Sales() {
       <div className="page-header">
         <div>
           <h1>Sales Records</h1>
-          <p>View all sales, installations, and package upgrades.</p>
+          <p>Live view of all sales, installations, and package upgrades.</p>
         </div>
       </div>
 
@@ -60,7 +57,7 @@ export default function Sales() {
           <div className="empty-state">
             <Building2 size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
             <h3>No Sales Records</h3>
-            <p>Once sales reps start recording sales, they will appear here.</p>
+            <p>Once sales reps start recording sales, they will appear here instantly.</p>
           </div>
         ) : (
           <div className="table-wrapper">
@@ -78,11 +75,13 @@ export default function Sales() {
               <tbody>
                 {filtered.map(s => (
                   <tr key={s.id}>
-                    <td style={{ color: 'var(--text-muted)' }}>{new Date(s.date?.toDate()).toLocaleDateString()}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>
+                      {s.date?.toDate ? new Date(s.date.toDate()).toLocaleDateString() : (s.date ? new Date(s.date).toLocaleDateString() : 'N/A')}
+                    </td>
                     <td style={{ fontWeight: 500 }}>{s.customerName}</td>
                     <td><span className="badge badge-muted">{s.type || 'New Install'}</span></td>
                     <td>{s.package}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--success)' }}>${s.amount?.toLocaleString()}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--success)' }}>KES {(s.amount || 0).toLocaleString()}</td>
                     <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.repName}</td>
                   </tr>
                 ))}

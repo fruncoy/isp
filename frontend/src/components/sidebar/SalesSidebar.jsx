@@ -3,11 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Wifi, 
   LayoutDashboard, 
-  UserPlus, 
-  Banknote, 
+  Users, 
   CreditCard,
-  Users,
-  LogOut
+  PieChart,
+  LogOut,
+  UserPlus,
+  Banknote
 } from 'lucide-react';
 
 export default function SalesSidebar() {
@@ -24,29 +25,31 @@ export default function SalesSidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        <div className="nav-section-label">Daily Workflow</div>
+        <div className="nav-section-label">Overview</div>
         <NavLink to="/sales/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <LayoutDashboard size={18} /> My Dashboard
+          <LayoutDashboard size={18} /> Dashboard
         </NavLink>
 
-        <div className="nav-section-label">Actions</div>
-        <NavLink to="/sales/register-customer" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UserPlus size={18} /> Register Customer
+        <div className="nav-section-label">Management</div>
+        <NavLink to="/sales/my-customers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Users size={18} /> Customer Mgt
+        </NavLink>
+
+        <div className="nav-section-label">Financials</div>
+        <NavLink to="/sales/record-payment" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <CreditCard size={18} /> Payment Records
         </NavLink>
         <NavLink to="/sales/record-sale" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Banknote size={18} /> Record Sale
         </NavLink>
-        <NavLink to="/sales/record-payment" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <CreditCard size={18} /> Record Payment
-        </NavLink>
 
-        <div className="nav-section-label">Records</div>
-        <NavLink to="/sales/my-customers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Users size={18} /> My Customers
+        <div className="nav-section-label">Insights</div>
+        <NavLink to="/sales/reports" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <PieChart size={18} /> Reports
         </NavLink>
       </nav>
 
-      <div className="sidebar-footer">
+      <div className="sidebar-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
         <div 
           className="nav-item" 
           onClick={() => logout()}
@@ -58,3 +61,4 @@ export default function SalesSidebar() {
     </aside>
   );
 }
+

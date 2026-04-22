@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { Loader2, CheckCircle2 } from 'lucide-react';
@@ -22,19 +22,19 @@ export default function RecordPayment() {
   });
 
   useEffect(() => {
-    if (userProfile?.uid) fetchCustomers();
-  }, [userProfile]);
+    if (!userProfile?.uid) return;
 
-  const fetchCustomers = async () => {
-    try {
-      const q = query(collection(db, 'customers'), where('repId', '==', userProfile.uid));
-      const snap = await getDocs(q);
+    // Use onSnapshot for real-time customer list in the dropdown
+    const q = query(collection(db, 'customers'), where('repId', '==', userProfile.uid));
+    const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
       setCustomers(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    }, (err) => {
+      console.error("Error fetching customers for dropdown:", err);
+    });
+
+    return () => unsub();
+  }, [userProfile]);
 
   const handleCustomerChange = (e) => {
     const custId = e.target.value;

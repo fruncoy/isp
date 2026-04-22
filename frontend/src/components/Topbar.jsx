@@ -17,20 +17,11 @@ export default function Topbar() {
           {role === 'admin' ? 'Admin' : 'Sales Rep'}
         </span>
         
-        <div className="topbar-user">
-          {userProfile?.name || 'User'}
-        </div>
-        
-        <div className="topbar-avatar">
-          {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
-        </div>
-
-        <div 
-          onClick={() => logout()} 
-          style={{ marginLeft: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}
-          title="Logout"
-        >
-          <LogOut size={20} />
+        <div className="topbar-user" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{userProfile?.name || 'User'}</span>
+          <div className="topbar-avatar" style={{ background: 'var(--accent)', color: 'white', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+            {userProfile?.name ? userProfile.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'}
+          </div>
         </div>
       </div>
     </header>

@@ -30,7 +30,17 @@ export const AuthProvider = ({ children }) => {
           const docRef = doc(db, 'users', firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setUserProfile(docSnap.data());
+            const profile = docSnap.data();
+            // RBAC: Block disabled accounts
+            if (profile.status === 'disabled') {
+              console.warn('Account is disabled. Signing out.');
+              await signOut(auth);
+              setUser(null);
+              setUserProfile(null);
+              setLoading(false);
+              return;
+            }
+            setUserProfile(profile);
           } else {
             console.warn('User profile document does not exist in Firestore!');
           }
@@ -77,9 +87,19 @@ export const AuthProvider = ({ children }) => {
       const docRef = doc(db, 'users', cred.user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setUserProfile(docSnap.data());
+        const profile = docSnap.data();
+        // RBAC: Block disabled accounts at login
+        if (profile.status === 'disabled') {
+          await signOut(auth);
+          throw new Error('Your account has been disabled. Please contact your administrator.');
+        }
+        setUserProfile(profile);
       }
     } catch (err) {
+      // Re-throw RBAC errors, but just log Firestore permission errors
+      if (err.message.includes('disabled')) {
+        throw err;
+      }
       console.error("Error on login fetching profile:", err.message);
     }
     return cred;

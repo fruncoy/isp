@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Search, CreditCard } from 'lucide-react';
 
@@ -9,22 +9,19 @@ export default function Payments() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetchPayments();
-  }, []);
-
-  const fetchPayments = async () => {
-    try {
-      const q = query(collection(db, 'payments'), orderBy('date', 'desc'));
-      const snap = await getDocs(q);
+    const q = query(collection(db, 'payments'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPayments(data);
-    } catch (err) {
+      setLoading(false);
+    }, (err) => {
       console.error(err);
       setPayments([]);
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+
+    return () => unsub();
+  }, []);
 
   const filtered = payments.filter(p => 
     p.customerName?.toLowerCase().includes(search.toLowerCase())
@@ -35,7 +32,7 @@ export default function Payments() {
       <div className="page-header">
         <div>
           <h1>Payment Records</h1>
-          <p>View all collected payments from customers.</p>
+          <p>Live view of all collected payments from customers.</p>
         </div>
       </div>
 
@@ -59,7 +56,7 @@ export default function Payments() {
           <div className="empty-state">
             <CreditCard size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
             <h3>No Payment Records</h3>
-            <p>Payments collected by reps will be logged here.</p>
+            <p>Payments collected by reps will be instantly logged here.</p>
           </div>
         ) : (
           <div className="table-wrapper">
@@ -77,10 +74,12 @@ export default function Payments() {
               <tbody>
                 {filtered.map(p => (
                   <tr key={p.id}>
-                    <td style={{ color: 'var(--text-muted)' }}>{new Date(p.date?.toDate()).toLocaleDateString()}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>
+                      {p.date?.toDate ? new Date(p.date.toDate()).toLocaleDateString() : (p.date ? new Date(p.date).toLocaleDateString() : 'N/A')}
+                    </td>
                     <td style={{ fontWeight: 500 }}>{p.customerName}</td>
                     <td>{p.method || 'Cash'}</td>
-                    <td style={{ fontWeight: 600 }}>${p.amount?.toLocaleString()}</td>
+                    <td style={{ fontWeight: 600 }}>KES {(p.amount || 0).toLocaleString()}</td>
                     <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.repName}</td>
                     <td>
                       <span className="badge badge-success">Completed</span>
