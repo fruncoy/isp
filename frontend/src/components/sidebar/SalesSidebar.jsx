@@ -37,10 +37,10 @@ export default function SalesSidebar() {
 
         <div className="nav-section-label">Financials</div>
         <NavLink to="/sales/record-payment" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <CreditCard size={18} /> Payment Records
+          <CreditCard size={18} /> Payment History
         </NavLink>
         <NavLink to="/sales/record-sale" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Banknote size={18} /> Record Sale
+          <Banknote size={18} /> Sales Records
         </NavLink>
 
         <div className="nav-section-label">Insights</div>

@@ -21,7 +21,6 @@ import ActivityLogs from './pages/admin/ActivityLogs';
 
 // Sales Rep Pages
 import SalesDashboard from './pages/sales/Dashboard';
-import RegisterCustomer from './pages/sales/RegisterCustomer';
 import RecordSale from './pages/sales/RecordSale';
 import RecordPayment from './pages/sales/RecordPayment';
 import MyCustomers from './pages/sales/MyCustomers';
@@ -105,7 +104,6 @@ export default function App() {
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<SalesDashboard />} />
-        <Route path="register-customer" element={<RegisterCustomer />} />
         <Route path="record-sale" element={<RecordSale />} />
         <Route path="record-payment" element={<RecordPayment />} />
         <Route path="my-customers" element={<MyCustomers />} />

@@ -25,9 +25,10 @@ service cloud.firestore {
 
     // USERS Collection
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      // Allow users to read their own profile without calling isAdmin() to avoid recursion
+      allow read: if isAuthenticated() && (request.auth.uid == userId || (request.auth.uid != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // CUSTOMERS Collection
@@ -61,6 +62,14 @@ service cloud.firestore {
       allow read: if isAdmin();
       // Nobody should be able to update or delete logs once written
       allow update, delete: if false;
+    }
+
+    // NOTIFICATIONS Collection
+    match /notifications/{notificationId} {
+      // Allow user to read their own notifications
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Allow creation of notifications
+      allow create: if isAuthenticated();
     }
   }
 }

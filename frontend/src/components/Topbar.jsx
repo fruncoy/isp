@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { LogOut } from 'lucide-react';
+import NotificationCenter from './NotificationCenter';
 
 export default function Topbar() {
   const { userProfile, role, logout } = useAuth();
@@ -12,7 +13,9 @@ export default function Topbar() {
         </div>
       </div>
       
-      <div className="topbar-right">
+      <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <NotificationCenter />
+        
         <span className={`role-badge ${role}`}>
           {role === 'admin' ? 'Admin' : 'Sales Rep'}
         </span>

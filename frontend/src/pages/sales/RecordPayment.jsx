@@ -1,169 +1,143 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, CheckCircle2 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { Search, Filter, Download, CreditCard } from 'lucide-react';
 
 export default function RecordPayment() {
   const { userProfile } = useAuth();
-  const navigate = useNavigate();
-  const [customers, setCustomers] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    customerId: '',
-    customerName: '',
-    amount: '',
-    method: 'Cash',
-    date: new Date().toISOString().split('T')[0],
-    notes: ''
-  });
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!userProfile?.uid) return;
 
-    // Use onSnapshot for real-time customer list in the dropdown
-    const q = query(collection(db, 'customers'), where('repId', '==', userProfile.uid));
+    // Fetch payment records for this specific sales rep
+    const q = query(collection(db, 'payments'), where('repId', '==', userProfile.uid));
     const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-      setCustomers(data);
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Sort in JS to handle missing createdAt fields gracefully
+      data.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
+        return dateB - dateA;
+      });
+      setPayments(data);
+      setLoading(false);
     }, (err) => {
-      console.error("Error fetching customers for dropdown:", err);
+      console.error('Firestore Payments Error:', err);
+      setPayments([]);
+      setLoading(false);
     });
 
     return () => unsub();
   }, [userProfile]);
 
-  const handleCustomerChange = (e) => {
-    const custId = e.target.value;
-    const cust = customers.find(c => c.id === custId);
-    setFormData({
-      ...formData,
-      customerId: custId,
-      customerName: cust ? cust.name : ''
-    });
+  const filtered = payments.filter(p => 
+    p.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleExport = () => {
+    if (payments.length === 0) return toast.error('No data to export');
+    
+    const headers = ['Date', 'Customer Name', 'Reference', 'Amount (KES)', 'Method', 'Status'];
+    const csvData = filtered.map(p => [
+      p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : new Date(p.date).toLocaleString(),
+      p.customerName,
+      p.reference,
+      p.amount,
+      p.method,
+      'Success'
+    ]);
+
+    const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `My_Payments_Report_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Exporting your payment records...');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.customerId) return toast.error('Please select a customer');
-
-    setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, 'payments'), {
-        ...formData,
-        amount: Number(formData.amount),
-        repId: userProfile.uid,
-        repName: userProfile.name,
-        date: new Date(formData.date),
-        createdAt: serverTimestamp()
-      });
-      
-      toast.success('Payment recorded successfully');
-      navigate('/sales/dashboard');
-    } catch (err) {
-      toast.error('Failed to record payment: ' + err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div>
       <div className="page-header">
         <div>
-          <h1>Record Payment Collection</h1>
-          <p>Log a payment collected from your customer.</p>
+          <h1>My Payment Records</h1>
+          <p>History of all customer payments you have processed.</p>
         </div>
+        <button className="btn btn-primary" onClick={handleExport}>
+          <Download size={18} />
+          Export My Payments
+        </button>
       </div>
 
       <div className="card">
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Select Customer *</label>
-            <select 
-              className="form-select"
-              required
-              value={formData.customerId}
-              onChange={handleCustomerChange}
-            >
-              <option value="">-- Choose a customer --</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">Amount Collected ($) *</label>
-              <input 
-                type="number" 
-                className="form-input" 
-                required
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.amount}
-                onChange={e => setFormData({...formData, amount: e.target.value})}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Payment Method *</label>
-              <select 
-                className="form-select"
-                value={formData.method}
-                onChange={e => setFormData({...formData, method: e.target.value})}
-              >
-                <option value="Cash">Cash</option>
-                <option value="Mobile Money">Mobile Money M-Pesa</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Collection Date *</label>
+        <div className="search-bar">
+          <div className="search-input-wrap">
+            <Search size={16} />
             <input 
-              type="date" 
-              className="form-input" 
-              required
-              style={{ maxWidth: '300px' }}
-              value={formData.date}
-              onChange={e => setFormData({...formData, date: e.target.value})}
+              type="text" 
+              placeholder="Search by customer or reference..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
+          <button className="btn btn-secondary">
+            <Filter size={16} />
+            Filter
+          </button>
+        </div>
 
-          <div className="form-group" style={{ marginBottom: '32px' }}>
-            <label className="form-label">Receipt Notes (Optional)</label>
-            <textarea 
-              className="form-textarea" 
-              rows={2}
-              placeholder="e.g. Cleared balance for March"
-              value={formData.notes}
-              onChange={e => setFormData({...formData, notes: e.target.value})}
-            />
+        {filtered.length === 0 ? (
+          <div className="empty-state">
+            <CreditCard size={40} />
+            <p>No payment records found.</p>
           </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 -20px 24px' }} />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-            <button 
-              type="button" 
-              className="btn btn-ghost" 
-              onClick={() => navigate('/sales/dashboard')}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? <><Loader2 size={16} className="spinner-lucide" /> Recording...</> : <><CheckCircle2 size={16} /> Record Payment</>}
-            </button>
+        ) : (
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Reference</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(p => (
+                  <tr key={p.id}>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>
+                        {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : new Date(p.date).toLocaleDateString()}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </div>
+                    </td>
+                    <td>{p.customerName}</td>
+                    <td><code style={{ fontSize: '12px' }}>{p.reference}</code></td>
+                    <td style={{ fontWeight: 600 }}>KES {p.amount?.toLocaleString()}</td>
+                    <td>{p.method}</td>
+                    <td><span className="badge badge-success">Success</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </form>
+        )}
       </div>
     </div>
   );

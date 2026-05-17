@@ -1,3 +1,7 @@
+# Environment variables - NEVER push these to Git
+.env
+*/.env
+
 # Dependencies - these are huge and can be reinstalled with npm install
 node_modules/
 */node_modules/

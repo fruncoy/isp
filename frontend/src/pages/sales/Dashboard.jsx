@@ -142,19 +142,19 @@ export default function SalesDashboard() {
         </div>
       </div>
 
-      <h3 style={{ margin: '30px 0 16px', fontSize: '15px' }}>Quick Actions</h3>
+      <h3 style={{ margin: '30px 0 16px', fontSize: '15px' }}>Quick Navigation</h3>
       <div className="charts-grid" style={{ gridTemplateColumns: 'minmax(200px, 1fr) minmax(200px, 1fr) minmax(200px, 1fr)', gap: '16px' }}>
-        <Link to="/sales/register-customer" className="card action-card">
+        <Link to="/sales/my-customers" className="card action-card">
           <div className="stat-icon action-icon"><UserPlus size={20} color="var(--accent)" /></div>
-          <span className="action-text">Register Customer</span>
+          <span className="action-text">Customer Management</span>
         </Link>
         <Link to="/sales/record-sale" className="card action-card">
           <div className="stat-icon action-icon"><Banknote size={20} color="var(--success)" /></div>
-          <span className="action-text">Record New Sale</span>
+          <span className="action-text">Sales Records</span>
         </Link>
         <Link to="/sales/record-payment" className="card action-card">
           <div className="stat-icon action-icon"><CreditCard size={20} color="var(--warning)" /></div>
-          <span className="action-text">Record Payment</span>
+          <span className="action-text">Payment History</span>
         </Link>
       </div>
 

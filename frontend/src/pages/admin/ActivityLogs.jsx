@@ -1,17 +1,53 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { History, Search, User, Zap, Settings, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { History, Search, User, Zap, Settings, ShoppingBag, ShieldCheck, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ActivityLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const handleExport = () => {
+    if (logs.length === 0) return toast.error('No data to export');
+    
+    const headers = ['Timestamp', 'Action', 'User/Rep', 'Description'];
+    const csvData = logs.map(l => [
+      l.timestamp?.toDate ? l.timestamp.toDate().toLocaleString() : 'N/A',
+      l.action,
+      l.repName || l.adminName || 'System',
+      `"${l.text?.replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `ISP_Activity_Logs_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Exporting activity logs...');
+  };
+
   useEffect(() => {
-    const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(100));
+    const q = query(collection(db, 'logs'));
     const unsub = onSnapshot(q, (snap) => {
-      setLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort in JS to handle missing timestamp fields gracefully
+      data.sort((a, b) => {
+        const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : (a.timestamp ? new Date(a.timestamp) : new Date(0));
+        const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : (b.timestamp ? new Date(b.timestamp) : new Date(0));
+        return dateB - dateA;
+      });
+      setLogs(data.slice(0, 100)); // Limit to latest 100
+      setLoading(false);
+    }, (err) => {
+      console.error('Firestore Logs Error:', err);
+      setLogs([]);
       setLoading(false);
     });
     return () => unsub();
@@ -36,8 +72,11 @@ export default function ActivityLogs() {
       <div className="page-header">
         <div>
           <h1>System Activity Logs</h1>
-          <p>Real-time audit trail of all major actions performed in the ISP portal.</p>
+          <p>Real-time audit trail of all system actions and transactions.</p>
         </div>
+        <button className="btn btn-primary" onClick={handleExport}>
+          <Download size={18} /> Export Logs
+        </button>
       </div>
 
       <div className="card">
